@@ -1,51 +1,84 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-ES">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BEC - Buscador de Ensayos Clínicos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary: #f59e0b;
+            --accent: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --light: #f8fafc;
+            --light-bg: #f0f9ff;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --gray: #64748b;
+            --light-gray: #e2e8f0;
+            --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.25);
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Nunito', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-        }
-        
-        :root {
-            --primary: #3a6ea5;
-            --primary-light: #5d8ec9;
-            --primary-dark: #1e4a7a;
-            --secondary: #f7b538;
-            --accent: #ff6b6b;
-            --light: #f8fafc;
-            --light-bg: #f9fbfd;
-            --dark: #2d3748;
-            --gray: #718096;
-            --light-gray: #e2e8f0;
-            --warm-gray: #edf2f7;
-            --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            font-family: 'Poppins', sans-serif;
         }
         
         body {
-            background-color: var(--light-bg);
-            color: #4a5568;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f0ff 100%);
+            color: #334155;
             line-height: 1.7;
             min-height: 100vh;
-            background-image: linear-gradient(135deg, #f0f7ff 0%, #f8fafc 100%);
+            background-attachment: fixed;
+            position: relative;
+            overflow-x: hidden;
         }
         
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.08) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.08) 0%, transparent 20%);
+            z-index: -1;
+        }
+        
+        /* Glassmorphism effect */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+        }
+        
+        /* Header */
         header {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
-            padding: 1.8rem 0;
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+            padding: 1.2rem 0;
             position: relative;
             overflow: hidden;
             border-bottom: 4px solid var(--secondary);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
         }
         
         header::before {
@@ -55,13 +88,14 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
             transform: rotate(30deg);
+            z-index: 1;
         }
         
         .container {
             width: 90%;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 15px;
             position: relative;
@@ -73,6 +107,8 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
+            position: relative;
+            z-index: 3;
         }
         
         .logo {
@@ -84,17 +120,23 @@
         .logo-icon {
             font-size: 2.8rem;
             color: #f0f9ff;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px;
             border-radius: 16px;
             backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+        }
+        
+        .logo:hover .logo-icon {
+            transform: rotate(10deg);
+            background: rgba(255, 255, 255, 0.3);
         }
         
         .logo-text h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
+            font-size: 2.1rem;
+            font-weight: 800;
             letter-spacing: -0.5px;
             background: linear-gradient(90deg, #ffffff, #e0f0ff);
             -webkit-background-clip: text;
@@ -103,61 +145,125 @@
         }
         
         .logo-text p {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             opacity: 0.9;
             margin-top: 6px;
             color: #dbeafe;
             font-weight: 300;
         }
         
+        /* Navigation */
+        .main-nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Hero Section */
+        .hero {
+            padding: 5rem 0 3rem;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+        
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(245, 158, 11, 0.08) 0%, transparent 60%);
+            z-index: -1;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero h1 {
+            font-size: 3.2rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero p {
+            font-size: 1.3rem;
+            color: var(--gray);
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+        }
+        
+        .hero-btns {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        /* Search Section */
         .search-section {
-            padding: 3.5rem 0 3rem;
+            padding: 3rem 0 2.5rem;
+            position: relative;
         }
         
         .section-title {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: 2.5rem;
         }
         
         .section-title h2 {
-            font-size: 2.4rem;
+            font-size: 2.5rem;
             margin-bottom: 15px;
             color: var(--dark);
             position: relative;
             display: inline-block;
-            font-weight: 700;
-        }
-        
-        .section-title h2::after {
-            content: "";
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 5px;
+            font-weight: 800;
             background: linear-gradient(90deg, var(--primary), var(--secondary));
-            border-radius: 3px;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
         .section-title p {
             color: var(--gray);
-            max-width: 700px;
+            max-width: 800px;
             margin: 1.2rem auto 0;
             font-size: 1.15rem;
             line-height: 1.7;
             font-weight: 400;
         }
         
+        /* Filter Container */
         .filter-container {
-            background-color: white;
+            background: var(--glass-bg);
             border-radius: 20px;
-            padding: 2.8rem;
+            padding: 2.5rem;
             box-shadow: var(--card-shadow);
-            border: 1px solid var(--light-gray);
+            border: 1px solid var(--glass-border);
             position: relative;
             overflow: hidden;
-            background-image: radial-gradient(circle at top right, rgba(247, 181, 56, 0.05) 0%, transparent 20%);
+            backdrop-filter: blur(12px);
+            margin-bottom: 2rem;
         }
         
         .filter-container::before {
@@ -172,9 +278,9 @@
         
         .filter-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 28px;
-            margin-bottom: 35px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
         }
         
         .filter-group {
@@ -207,23 +313,23 @@
             border-radius: 12px;
             font-size: 1.05rem;
             transition: var(--transition);
-            background: var(--warm-gray);
+            background: rgba(248, 250, 252, 0.8);
             color: #334155;
             appearance: none;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 1.2rem center;
             background-size: 1.5em 1.5em;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
         
         .filter-group input:focus, 
         .filter-group select:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(58, 110, 165, 0.15);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
             outline: none;
             background: white;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
         }
         
         .search-actions {
@@ -233,6 +339,7 @@
             margin-top: 20px;
         }
         
+        /* Buttons */
         .btn {
             padding: 15px 35px;
             border: none;
@@ -245,34 +352,47 @@
             align-items: center;
             gap: 10px;
             letter-spacing: 0.5px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
         }
         
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
-            box-shadow: 0 5px 15px rgba(58, 110, 165, 0.3);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.35);
         }
         
         .btn-primary:hover {
             background: linear-gradient(135deg, var(--primary-dark), var(--primary));
             transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(26, 86, 219, 0.35);
+            box-shadow: 0 8px 20px rgba(26, 86, 219, 0.4);
         }
         
         .btn-outline {
-            background: transparent;
+            background: white;
             border: 2px solid var(--primary);
             color: var(--primary);
         }
         
         .btn-outline:hover {
-            background-color: rgba(58, 110, 165, 0.08);
+            background-color: rgba(37, 99, 235, 0.1);
             transform: translateY(-3px);
         }
         
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary), #e68a00);
+            color: white;
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.35);
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #e68a00, var(--secondary));
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(230, 138, 0, 0.4);
+        }
+        
+        /* Results Section */
         .results-section {
-            padding: 4.5rem 0;
+            padding: 3.5rem 0;
             display: none;
         }
         
@@ -309,38 +429,78 @@
             border-radius: 8px;
             background: white;
             font-size: 1rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transition: var(--transition);
         }
         
         .sort-select:focus {
             border-color: var(--primary);
             outline: none;
-            box-shadow: 0 0 0 3px rgba(58, 110, 165, 0.15);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
         }
         
+        /* Results Tabs */
+        .results-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--light-gray);
+            padding-bottom: 1rem;
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab-btn:hover:not(.active) {
+            background: rgba(37, 99, 235, 0.15);
+        }
+        
+        /* Results Container */
         .results-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-            gap: 35px;
+            gap: 30px;
         }
         
         .trial-card {
-            background-color: white;
+            background: var(--glass-bg);
             border-radius: 18px;
             overflow: hidden;
             box-shadow: var(--card-shadow);
             transition: var(--transition);
-            border: 1px solid var(--light-gray);
+            border: 1px solid var(--glass-border);
             display: flex;
             flex-direction: column;
             height: 100%;
             position: relative;
+            backdrop-filter: blur(10px);
+            transform: translateY(20px);
+            opacity: 0;
+            animation: fadeInUp 0.6s forwards;
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
         
         .trial-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
         
         .card-header {
@@ -361,7 +521,7 @@
         }
         
         .card-header h3 {
-            font-size: 1.45rem;
+            font-size: 1.4rem;
             margin-bottom: 12px;
             line-height: 1.4;
             font-weight: 700;
@@ -418,7 +578,7 @@
         
         .card-footer {
             padding: 1.6rem 2rem;
-            background-color: #f8fafc;
+            background-color: rgba(248, 250, 252, 0.7);
             border-top: 1px solid var(--light-gray);
             display: flex;
             justify-content: space-between;
@@ -433,17 +593,17 @@
         }
         
         .status.recruiting {
-            background-color: rgba(16, 185, 129, 0.15);
+            background-color: rgba(16, 185, 129, 0.2);
             color: #047857;
         }
         
         .status.completed {
-            background-color: rgba(59, 130, 246, 0.15);
+            background-color: rgba(59, 130, 246, 0.2);
             color: #1d4ed8;
         }
         
         .status.not-recruiting {
-            background-color: rgba(239, 68, 68, 0.15);
+            background-color: rgba(239, 68, 68, 0.2);
             color: #b91c1c;
         }
         
@@ -459,23 +619,25 @@
             gap: 8px;
             transition: var(--transition);
             font-size: 0.97rem;
-            box-shadow: 0 3px 10px rgba(58, 110, 165, 0.25);
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
         }
         
         .btn-access:hover {
             background: linear-gradient(135deg, var(--primary-dark), var(--primary));
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(58, 110, 165, 0.35);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
         }
         
+        /* No Results */
         .no-results {
             text-align: center;
             padding: 4.5rem;
             grid-column: 1 / -1;
-            background: white;
+            background: var(--glass-bg);
             border-radius: 18px;
             box-shadow: var(--card-shadow);
-            border: 1px solid var(--light-gray);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
         }
         
         .no-results i {
@@ -500,11 +662,407 @@
             line-height: 1.8;
         }
         
+        /* Map Container */
+        .map-container {
+            background: var(--glass-bg);
+            border-radius: 18px;
+            padding: 2rem;
+            margin-top: 3rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--glass-border);
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        #map {
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f1f5f9;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .map-legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+        }
+        
+        .legend-recruiting {
+            background-color: #10b981;
+        }
+        
+        .legend-completed {
+            background-color: #3b82f6;
+        }
+        
+        .legend-not-recruiting {
+            background-color: #ef4444;
+        }
+        
+        /* Analytics Section */
+        .analytics-section {
+            background: var(--glass-bg);
+            border-radius: 18px;
+            padding: 2rem;
+            margin-top: 3rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--glass-border);
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        .analytics-header {
+            margin-bottom: 1.5rem;
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .analytics-card {
+            background: rgba(248, 250, 252, 0.7);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .analytics-card h4 {
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+        
+        .analytics-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 15px 0;
+        }
+        
+        .analytics-card p {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+        
+        .chart-container {
+            height: 250px;
+            margin-top: 1.5rem;
+            position: relative;
+        }
+        
+        .chart-placeholder {
+            background: rgba(241, 245, 249, 0.5);
+            border-radius: 8px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+        }
+        
+        /* Notification Badge */
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        
+        /* Featured Trial */
+        .featured-trial {
+            background: var(--glass-bg);
+            border-radius: 18px;
+            padding: 2.5rem;
+            margin: 3.5rem auto;
+            max-width: 900px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .featured-trial::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        
+        .featured-trial h3 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .featured-trial p {
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+            max-width: 700px;
+            line-height: 1.8;
+        }
+        
+        .featured-trial .btn {
+            margin-top: 1rem;
+        }
+        
+        .featured-trial-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+        
+        /* User Guide */
+        .user-guide {
+            background: var(--glass-bg);
+            border-radius: 18px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+        }
+        
+        .user-guide h3 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .guide-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .guide-step {
+            background: rgba(248, 250, 252, 0.7);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+        }
+        
+        .guide-step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .guide-step h4 {
+            margin-bottom: 10px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* AI Assistant */
+        .ai-assistant {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.5);
+            cursor: pointer;
+            z-index: 1000;
+            transition: var(--transition);
+        }
+        
+        .ai-assistant:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.6);
+        }
+        
+        /* AI Assistant Chatbox */
+        .ai-assistant-chatbox {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 350px;
+            height: 450px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            z-index: 1001;
+            overflow: hidden;
+            transform: translateY(20px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-assistant-chatbox.active {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+        
+        .close-chat {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #f9fafb;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            line-height: 1.4;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--primary);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+            background-color: #f1f5f9;
+            color: #334155;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .message-content {
+            word-wrap: break-word;
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            outline: none;
+            transition: var(--transition);
+        }
+        
+        .chat-input input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        
+        .chat-input button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .chat-input button:hover {
+            background: var(--primary-dark);
+        }
+        
+        /* Footer */
         .footer {
-            background: linear-gradient(135deg, var(--dark), #0f172a);
+            background: linear-gradient(135deg, var(--darker), #0b1120);
             color: #e2e8f0;
             padding: 5rem 0 3rem;
             border-top: 5px solid var(--secondary);
+            margin-top: 4rem;
         }
         
         .footer-content {
@@ -565,7 +1123,7 @@
             margin-top: 5rem;
             text-align: center;
             padding-top: 2.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
             font-size: 1rem;
             color: #94a3b8;
         }
@@ -575,6 +1133,7 @@
             font-size: 0.95rem;
         }
         
+        /* Loading Spinner */
         .loading {
             display: none;
             text-align: center;
@@ -585,7 +1144,7 @@
         .spinner {
             width: 55px;
             height: 55px;
-            border: 5px solid rgba(58, 110, 165, 0.2);
+            border: 5px solid rgba(37, 99, 235, 0.2);
             border-top: 5px solid var(--primary);
             border-radius: 50%;
             margin: 0 auto 2.5rem;
@@ -597,57 +1156,54 @@
             100% { transform: rotate(360deg); }
         }
         
-        .featured-trial {
-            background-color: white;
+        /* Statistics Section */
+        .stats-section {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, var(--light-bg), #dbeafe);
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+        }
+        
+        .stat-card {
+            background: var(--glass-bg);
             border-radius: 18px;
-            padding: 2.5rem;
-            margin: 4rem auto;
-            max-width: 900px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
-            border: 1px solid var(--light-gray);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 2rem;
             text-align: center;
-            background-image: radial-gradient(circle at bottom left, rgba(247, 181, 56, 0.05) 0%, transparent 40%);
-            position: relative;
-            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
         }
         
-        .featured-trial::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
+        .stat-card:hover {
+            transform: translateY(-8px);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1.2rem;
+        }
+        
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 800;
             background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
         }
         
-        .featured-trial h3 {
-            font-size: 1.8rem;
-            color: var(--primary);
-            margin-bottom: 1rem;
-            font-weight: 700;
-        }
-        
-        .featured-trial p {
+        .stat-title {
             color: var(--gray);
-            margin-bottom: 1.5rem;
-            max-width: 700px;
-            line-height: 1.8;
+            font-size: 1.1rem;
         }
         
-        .featured-trial .btn {
-            margin-top: 1rem;
-        }
-        
-        .featured-trial-icon {
-            font-size: 3rem;
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-        }
-        
+        /* Responsive Design */
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -698,10 +1254,69 @@
                 padding: 1.5rem;
                 margin: 2rem auto;
             }
+            
+            .results-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .section-title h2 {
+                font-size: 2rem;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .hero-btns {
+                flex-direction: column;
+            }
+            
+            .ai-assistant-chatbox {
+                width: 90%;
+                height: 400px;
+                right: 5%;
+                bottom: 80px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- AI Assistant Floating Button -->
+    <div class="ai-assistant" id="ai-assistant">
+        <i class="fas fa-robot"></i>
+    </div>
+    
+    <!-- AI Assistant Chatbox -->
+    <div class="ai-assistant-chatbox" id="ai-chatbox">
+        <div class="chat-header">
+            <h3>Asistente Virtual</h3>
+            <button class="close-chat"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <div class="message ai-message">
+                <div class="message-content">
+                    ¡Hola! Soy tu asistente virtual de BEC+ Premium. ¿En qué puedo ayudarte hoy?
+                </div>
+            </div>
+            <div class="message ai-message">
+                <div class="message-content">
+                    Puedes preguntarme sobre ensayos clínicos, cómo usar la plataforma, o cualquier duda relacionada con la investigación médica en España.
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Escribe tu pregunta...">
+            <button id="send-message"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+    
+    <!-- Header -->
     <header>
         <div class="container">
             <div class="header-content">
@@ -710,35 +1325,118 @@
                         <i class="fas fa-clinic-medical"></i>
                     </div>
                     <div class="logo-text">
-                        <h1>Buscador de Ensayos Clínicos</h1>
-                        <p>Encuentra estudios médicos relevantes</p>
+                        <h1>BEC</h1>
+                        <p>Buscador de Ensayos Clínicos</p>
                     </div>
                 </div>
+                <nav class="main-nav">
+                    <a href="#" class="nav-link"><i class="fas fa-home"></i> Inicio</a>
+                    <a href="#" class="nav-link"><i class="fas fa-book-medical"></i> Recursos</a>
+                    <button class="btn btn-outline">
+                        <i class="fas fa-user"></i> Acceder
+                    </button>
+                </nav>
             </div>
         </div>
     </header>
     
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Encuentra los ensayos clínicos que necesitas</h1>
+                <p>La plataforma más avanzada para investigadores médicos y pacientes que buscan opciones de tratamiento innovadoras. Filtra por enfermedad, ubicación y criterios avanzados.</p>
+                <div class="hero-btns">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-info-circle"></i> Más Información
+                    </button>
+                    <button class="btn btn-secondary">
+                        <i class="fas fa-video"></i> Ver Demo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Statistics Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <div class="stat-number">1,240</div>
+                    <div class="stat-title">Ensayos Activos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <div class="stat-number">85</div>
+                    <div class="stat-title">Instituciones Médicas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div class="stat-number">3,500</div>
+                    <div class="stat-title">Investigadores</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-number">42,000+</div>
+                    <div class="stat-title">Participantes</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Search Section -->
     <section class="search-section">
         <div class="container">
             <div class="section-title">
-                <h2>Texto Destacado</h2>
-                <p>Utilice los filtros para encontrar ensayos clínicos específicos. Puede combinar múltiples criterios para obtener resultados más precisos.</p>
+                <h2>Texto</h2>
+                <p>Descripción</p>
             </div>
             
             <div class="featured-trial">
                 <div class="featured-trial-icon">
-                    <i class="fas fa-star"></i>
+                    <i class="fas fa-newspaper"></i>
                 </div>
-                <h3>Destacado: Poner un estudio nuevo o que esté por salir</h3>
-                <p>Descripción</p>
+                <h3>NOVEDADES</h3>
+                <p>Texto | Descripción</p>
                 <button class="btn btn-primary">
-                    <i class="fas fa-info-circle"></i> Más información
+                    <i class="fas fa-info-circle"></i> Ver detalles
                 </button>
+            </div>
+            
+            <div class="user-guide">
+                <h3><i class="fas fa-info-circle"></i> Guía Rápida para Pacientes</h3>
+                <div class="guide-steps">
+                    <div class="guide-step">
+                        <h4><i class="fas fa-1"></i> Busca por enfermedad</h4>
+                        <p>Selecciona la enfermedad o condición que te interesa para encontrar ensayos relevantes.</p>
+                    </div>
+                    <div class="guide-step">
+                        <h4><i class="fas fa-2"></i> Filtra por ubicación</h4>
+                        <p>Encuentra ensayos cerca de ti para facilitar tu participación.</p>
+                    </div>
+                    <div class="guide-step">
+                        <h4><i class="fas fa-3"></i> Revisa los criterios</h4>
+                        <p>Cada ensayo tiene requisitos específicos para participantes. Verifica si cumples con ellos.</p>
+                    </div>
+                    <div class="guide-step">
+                        <h4><i class="fas fa-4"></i> Contacta al equipo</h4>
+                        <p>Usa la información de contacto proporcionada para solicitar más información.</p>
+                    </div>
+                </div>
             </div>
             
             <div class="filter-container">
                 <div class="filter-grid">
-                    <!-- Campo de enfermedad -->
                     <div class="filter-group">
                         <label for="disease"><i class="fas fa-disease"></i> Tipo de Enfermedad</label>
                         <select id="disease">
@@ -769,7 +1467,6 @@
                         </select>
                     </div>
                     
-                    <!-- Campo de localidad -->
                     <div class="filter-group">
                         <label for="location"><i class="fas fa-map-marker-alt"></i> Localidad</label>
                         <select id="location">
@@ -845,6 +1542,28 @@
                             <option value="biological">Biológico</option>
                         </select>
                     </div>
+                    
+                    <div class="filter-group">
+                        <label for="sponsor"><i class="fas fa-building"></i> Empresa</label>
+                        <select id="sponsor">
+                            <option value="">Todas las empresas</option>
+                            <option value="PharmaCorp">PharmaCorp</option>
+                            <option value="MediResearch">MediResearch</option>
+                            <option value="BioTech Solutions">BioTech Solutions</option>
+                            <option value="University Hospital">Hospital Universitario</option>
+                            <option value="Government">Gobierno</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="age-group"><i class="fas fa-user"></i> Grupo de Edad</label>
+                        <select id="age-group">
+                            <option value="">Todos los grupos</option>
+                            <option value="child">Niños (0-17)</option>
+                            <option value="adult">Adultos (18-64)</option>
+                            <option value="senior">Mayores (65+)</option>
+                        </select>
+                    </div>
                 </div>
                 
                 <div class="search-actions">
@@ -854,11 +1573,15 @@
                     <button id="reset-btn" class="btn btn-outline">
                         <i class="fas fa-redo"></i> Restablecer
                     </button>
+                    <button id="save-search" class="btn btn-secondary">
+                        <i class="fas fa-save"></i> Guardar Búsqueda
+                    </button>
                 </div>
             </div>
         </div>
     </section>
     
+    <!-- Results Section -->
     <section class="results-section" id="results-section">
         <div class="container">
             <div class="results-header">
@@ -880,18 +1603,71 @@
                 </div>
             </div>
             
+            <div class="results-tabs">
+                <button class="tab-btn active" data-tab="list">Lista de Ensayos</button>
+                <button class="tab-btn" data-tab="map">Mapa de Ubicaciones</button>
+                <button class="tab-btn" data-tab="analytics">Análisis</button>
+            </div>
+            
             <div class="results-container" id="results-container">
-                <!-- Los resultados se cargarán aquí dinámicamente -->
+                <!-- Results will be populated here -->
+            </div>
+            
+            <div class="map-container" id="map-container">
+                <div class="map-header">
+                    <h3>Ubicación de los Ensayos</h3>
+                </div>
+                <div id="map"></div>
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <div class="legend-color legend-recruiting"></div>
+                        <span>Reclutando</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color legend-completed"></div>
+                        <span>Completado</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color legend-not-recruiting"></div>
+                        <span>No reclutando</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analytics-section" id="analytics-section">
+                <div class="analytics-header">
+                    <h3>Análisis de Ensayos</h3>
+                </div>
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h4>Distribución por Fase</h4>
+                        <div class="chart-container">
+                            <canvas id="phaseChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>Estados de Ensayos</h4>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>Participantes Totales</h4>
+                        <div class="value">4,230</div>
+                        <p>Personas participando en ensayos activos</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
     
+    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-column">
-                    <h4>Buscador de Ensayos</h4>
-                    <p>Plataforma profesional para investigadores médicos y pacientes que buscan opciones de tratamiento innovadoras.</p>
+                    <h4>BEC</h4>
+                    <p>Plataforma para investigadores médicos y pacientes que buscan opciones de tratamiento innovadoras.</p>
                     <div class="footer-links" style="margin-top: 20px;">
                         <li><a href="#"><i class="fas fa-shield-alt"></i> Seguridad garantizada</a></li>
                         <li><a href="#"><i class="fas fa-user-md"></i> Aprobado por profesionales</a></li>
@@ -912,11 +1688,10 @@
                 <div class="footer-column">
                     <h4>Contacto</h4>
                     <ul class="footer-links">
-                        <li><a href="#"><i class="fas fa-envelope"></i> info@ensayosclinicos.es</a></li>
+                        <li><a href="#"><i class="fas fa-envelope"></i> ensayos@gmail.com</a></li>
                         <li><a href="#"><i class="fas fa-phone"></i> +34 XXX XXX XXX</a></li>
-                        <li><a href="#"><i class="fas fa-map-marker-alt"></i> Tenerife, España</a></li>
+                        <li><a href="#"><i class="fas fa-map-marker-alt"></i>Tenerife, España</a></li>
                         <li><a href="#"><i class="fas fa-calendar-alt"></i> Lunes a Viernes: 9:00 - 18:00</a></li>
-                        <li><a href="#"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
                     </ul>
                 </div>
             </div>
@@ -924,14 +1699,43 @@
             <div class="footer-bottom">
                 <p>Plataforma desarrollada con los más altos estándares de calidad y seguridad</p>
                 <div class="copyright">
-                    <p>&copy; 2023 Buscador de Ensayos Clínicos. Todos los derechos reservados.</p>
+                    <p>&copy; 2025 BEC. Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>
     </footer>
     
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Datos de ensayos clínicos de ejemplo
+        // Archivo JSON externo con preguntas y respuestas
+        const faqs = [
+            {
+                "question": "¿Cómo buscar ensayos clínicos?",
+                "answer": "Puedes buscar ensayos clínicos usando los filtros en la sección de búsqueda avanzada. Puedes filtrar por enfermedad, ubicación, fase del ensayo, estado y más."
+            },
+            {
+                "question": "¿Qué es un ensayo de fase III?",
+                "answer": "Los ensayos de fase III son estudios a gran escala que confirman la efectividad de un tratamiento en comparación con el tratamiento estándar. Suelen incluir cientos o miles de participantes."
+            },
+            {
+                "question": "¿Qué ensayos hay en Madrid?",
+                "answer": "Actualmente tenemos 2 ensayos activos en Madrid: 'Estudio de inmunoterapia para cáncer de pulmón avanzado' y 'Vacuna preventiva para Alzheimer'. Puedes verlos en el mapa o en la lista de resultados."
+            },
+            {
+                "question": "¿Cómo puedo participar en un ensayo?",
+                "answer": "Para participar, primero encuentra un ensayo que sea adecuado para ti. Luego, contacta al equipo de investigación usando la información de contacto proporcionada en la ficha del ensayo."
+            },
+            {
+                "question": "¿Es seguro participar en ensayos clínicos?",
+                "answer": "Todos los ensayos siguen estrictos protocolos de seguridad y están supervisados por comités éticos. La seguridad de los participantes es la máxima prioridad en cualquier estudio clínico."
+            },
+            {
+                "question": "¿Hay coste para los participantes?",
+                "answer": "La participación en ensayos clínicos es gratuita para los pacientes. Además, muchos ensayos cubren los gastos de transporte y otros costes relacionados."
+            }
+        ];
+
+        // Enhanced clinical trials data
         const clinicalTrials = [
             {
                 id: "NCT04567890",
@@ -941,12 +1745,19 @@
                 phase: "III",
                 status: "recruiting",
                 intervention: "drug",
-                description: "Ensayo fase III para evaluar la eficacia de un nuevo inhibidor de puntos de control inmunológico en pacientes con cáncer de pulmón no microcítico avanzado.",
+                description: "Ensayo fase III para evaluar la eficacia de un nuevo inhibidor de puntos de control inmunológico en pacientes con cáncer de pulmón no microcítico avanzado. El estudio evaluará la supervivencia global y la supervivencia libre de progresión.",
                 sponsor: "OncoMed Pharmaceuticals",
                 startDate: "2023-01-15",
                 endDate: "2025-12-31",
                 participants: 320,
-                link: "#"
+                link: "#",
+                lat: 40.4168,
+                lng: -3.7038,
+                contact: "Dr. Juan Martínez - jmartinez@hospital.es",
+                impact: "Alto",
+                institution: "Hospital Universitario La Paz",
+                sponsorType: "PharmaCorp",
+                ageGroup: "adult"
             },
             {
                 id: "NCT03456789",
@@ -956,12 +1767,19 @@
                 phase: "I/II",
                 status: "recruiting",
                 intervention: "gene",
-                description: "Estudio de seguridad y eficacia preliminar de una terapia génica innovadora para pacientes pediátricos con distrofia muscular de Duchenne.",
+                description: "Estudio de seguridad y eficacia preliminar de una terapia génica innovadora para pacientes pediátricos con distrofia muscular de Duchenne. El tratamiento utiliza vectores AAV para la entrega del gen de la distrofina.",
                 sponsor: "GeneCure Therapeutics",
                 startDate: "2022-09-01",
                 endDate: "2024-06-30",
                 participants: 45,
-                link: "#"
+                link: "#",
+                lat: 41.3851,
+                lng: 2.1734,
+                contact: "Dra. Laura Gómez - lgomez@clinicbcn.org",
+                impact: "Muy Alto",
+                institution: "Hospital Clínic de Barcelona",
+                sponsorType: "BioTech Solutions",
+                ageGroup: "child"
             },
             {
                 id: "NCT01234567",
@@ -971,12 +1789,19 @@
                 phase: "III",
                 status: "completed",
                 intervention: "drug",
-                description: "Ensayo controlado aleatorizado de fase III que compara la eficacia de un nuevo antidiabético oral frente al tratamiento estándar en pacientes con diabetes tipo 2 mal controlada.",
+                description: "Ensayo controlado aleatorizado de fase III que compara la eficacia de un nuevo antidiabético oral frente al tratamiento estándar en pacientes con diabetes tipo 2 mal controlada. El estudio evaluó los cambios en HbA1c a las 24 semanas.",
                 sponsor: "MediPharma Solutions",
                 startDate: "2020-03-10",
                 endDate: "2022-11-30",
                 participants: 560,
-                link: "#"
+                link: "#",
+                lat: 39.4699,
+                lng: -0.3763,
+                contact: "Dr. Carlos Ruiz - cruiz@hospitalvalencia.es",
+                impact: "Moderado",
+                institution: "Hospital General de Valencia",
+                sponsorType: "MediResearch",
+                ageGroup: "adult"
             },
             {
                 id: "NCT02345678",
@@ -986,12 +1811,19 @@
                 phase: "IV",
                 status: "recruiting",
                 intervention: "device",
-                description: "Evaluación post-comercialización de un nuevo sistema de monitorización continua de glucosa en pacientes con diabetes tipo 1.",
+                description: "Evaluación post-comercialización de un nuevo sistema de monitorización continua de glucosa en pacientes con diabetes tipo 1. El estudio evaluará la precisión del dispositivo y la satisfacción del paciente.",
                 sponsor: "GlucoCheck Inc.",
                 startDate: "2023-04-01",
                 endDate: "2024-12-15",
                 participants: 200,
-                link: "#"
+                link: "#",
+                lat: 37.3891,
+                lng: -5.9845,
+                contact: "Dra. Isabel Fernández - ifernandez@husevilla.es",
+                impact: "Alto",
+                institution: "Hospital Universitario Virgen del Rocío",
+                sponsorType: "BioTech Solutions",
+                ageGroup: "adult"
             },
             {
                 id: "NCT05678901",
@@ -1001,12 +1833,19 @@
                 phase: "II",
                 status: "not-recruiting",
                 intervention: "behavioral",
-                description: "Estudio de eficacia de un protocolo intensivo de terapia cognitivo-conductual en pacientes con depresión mayor resistente a tratamiento farmacológico.",
+                description: "Estudio de eficacia de un protocolo intensivo de terapia cognitivo-conductual en pacientes con depresión mayor resistente a tratamiento farmacológico. El protocolo incluye 16 sesiones durante 8 semanas.",
                 sponsor: "NeuroMind Institute",
                 startDate: "2021-07-15",
                 endDate: "2023-05-30",
                 participants: 120,
-                link: "#"
+                link: "#",
+                lat: 43.2630,
+                lng: -2.9350,
+                contact: "Dr. Javier López - jlopez@saludmental.org",
+                impact: "Moderado",
+                institution: "Centro de Salud Mental de Bizkaia",
+                sponsorType: "University Hospital",
+                ageGroup: "adult"
             },
             {
                 id: "NCT06789012",
@@ -1016,12 +1855,19 @@
                 phase: "II",
                 status: "recruiting",
                 intervention: "biological",
-                description: "Ensayo de fase II para evaluar la seguridad e inmunogenicidad de una vacuna preventiva contra la enfermedad de Alzheimer en adultos asintomáticos con riesgo genético.",
+                description: "Ensayo de fase II para evaluar la seguridad e inmunogenicidad de una vacuna preventiva contra la enfermedad de Alzheimer en adultos asintomáticos con riesgo genético. El estudio incluirá seguimiento a 24 meses.",
                 sponsor: "NeuroVax Laboratories",
                 startDate: "2023-03-01",
                 endDate: "2027-02-28",
                 participants: 300,
-                link: "#"
+                link: "#",
+                lat: 40.4168,
+                lng: -3.7038,
+                contact: "Dra. Elena Sánchez - esanchez@neuroresearch.es",
+                impact: "Revolucionario",
+                institution: "Hospital Ramón y Cajal",
+                sponsorType: "PharmaCorp",
+                ageGroup: "senior"
             },
             {
                 id: "NCT07654321",
@@ -1031,12 +1877,19 @@
                 phase: "II",
                 status: "recruiting",
                 intervention: "drug",
-                description: "Estudio de fase II para evaluar la eficacia de una terapia dirigida en pacientes con melanoma avanzado con mutación BRAF V600E.",
+                description: "Estudio de fase II para evaluar la eficacia de una terapia dirigida en pacientes con melanoma avanzado con mutación BRAF V600E. El tratamiento combina un inhibidor de BRAF y un inhibidor de MEK.",
                 sponsor: "DermOncology Research",
                 startDate: "2023-05-10",
                 endDate: "2025-10-31",
                 participants: 150,
-                link: "#"
+                link: "#",
+                lat: 41.3851,
+                lng: 2.1734,
+                contact: "Dr. Marc Vidal - mvidal@dermocancer.org",
+                impact: "Alto",
+                institution: "Institut Català d'Oncologia",
+                sponsorType: "MediResearch",
+                ageGroup: "adult"
             },
             {
                 id: "NCT08765432",
@@ -1046,30 +1899,109 @@
                 phase: "III",
                 status: "recruiting",
                 intervention: "device",
-                description: "Ensayo clínico de fase III para evaluar la seguridad y eficacia de un nuevo implante coclear en pacientes con pérdida auditiva neurosensorial severa a profunda.",
+                description: "Ensayo clínico de fase III para evaluar la seguridad y eficacia de un nuevo implante coclear en pacientes con pérdida auditiva neurosensorial severa a profunda. El estudio evaluará la mejora en la comprensión del habla a los 6 meses.",
                 sponsor: "AudioTech Innovations",
                 startDate: "2023-02-15",
                 endDate: "2024-11-30",
                 participants: 180,
-                link: "#"
+                link: "#",
+                lat: 39.4699,
+                lng: -0.3763,
+                contact: "Dr. Antonio Molina - amolina@audiotech.es",
+                impact: "Alto",
+                institution: "Hospital La Fe",
+                sponsorType: "BioTech Solutions",
+                ageGroup: "adult"
+            },
+            {
+                id: "NCT09876543",
+                title: "Inhibidor de JAK para artritis reumatoide",
+                disease: "Artritis reumatoide",
+                location: "Sevilla",
+                phase: "III",
+                status: "recruiting",
+                intervention: "drug",
+                description: "Ensayo fase III de un nuevo inhibidor de JAK para el tratamiento de la artritis reumatoide moderada a severa en pacientes con respuesta inadecuada a DMARDs. El estudio evaluará la respuesta ACR20 a las 12 semanas.",
+                sponsor: "RheumaBio",
+                startDate: "2023-06-01",
+                endDate: "2025-03-31",
+                participants: 420,
+                link: "#",
+                lat: 37.3891,
+                lng: -5.9845,
+                contact: "Dra. Carmen Torres - ctorres@rheumabio.org",
+                impact: "Alto",
+                institution: "Hospital Universitario Virgen Macarena",
+                sponsorType: "PharmaCorp",
+                ageGroup: "adult"
+            },
+            {
+                id: "NCT11223344",
+                title: "Terapia celular para lesión medular",
+                disease: "Lesión medular",
+                location: "Barcelona",
+                phase: "I",
+                status: "recruiting",
+                intervention: "biological",
+                description: "Estudio de fase I para evaluar la seguridad de una terapia con células madre mesenquimales autólogas en pacientes con lesión medular traumática. El estudio incluirá seguimiento a 12 meses.",
+                sponsor: "NeuroRegen Inc.",
+                startDate: "2023-07-15",
+                endDate: "2026-01-31",
+                participants: 24,
+                link: "#",
+                lat: 41.3851,
+                lng: 2.1734,
+                contact: "Dr. Roberto Mendoza - rmendoza@neuroregen.es",
+                impact: "Revolucionario",
+                institution: "Hospital Vall d'Hebron",
+                sponsorType: "University Hospital",
+                ageGroup: "adult"
             }
         ];
         
-        // Referencias a elementos DOM
+        // DOM References
         const searchBtn = document.getElementById('search-btn');
         const resetBtn = document.getElementById('reset-btn');
+        const saveSearchBtn = document.getElementById('save-search');
         const resultsSection = document.getElementById('results-section');
         const resultsContainer = document.getElementById('results-container');
         const resultsCount = document.getElementById('results-count');
         const sortSelect = document.getElementById('sort-select');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const mapContainer = document.getElementById('map-container');
+        const analyticsSection = document.getElementById('analytics-section');
         
-        // Función para formatear fechas
+        // AI Assistant References
+        const aiAssistant = document.getElementById('ai-assistant');
+        const aiChatbox = document.getElementById('ai-chatbox');
+        const closeChat = document.querySelector('.close-chat');
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendMessageBtn = document.getElementById('send-message');
+        
+        // Initialize map
+        let map;
+        function initMap() {
+            // Set initial view to center of Spain with zoom level 6
+            map = L.map('map').setView([40.4168, -3.7038], 6);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Add default markers for Spain
+            clinicalTrials.forEach(trial => {
+                addMarkerToMap(trial);
+            });
+        }
+        
+        // Format dates
         function formatDate(dateString) {
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
             return new Date(dateString).toLocaleDateString('es-ES', options);
         }
         
-        // Función para mostrar los ensayos
+        // Display trials
         function displayTrials(trials) {
             resultsContainer.innerHTML = '';
             
@@ -1085,14 +2017,14 @@
                 return;
             }
             
-            // Actualizar contador de resultados
+            // Update results count
             resultsCount.textContent = `${trials.length} ${trials.length === 1 ? 'resultado' : 'resultados'} encontrados`;
             
-            // Ordenar los resultados
+            // Sort results
             sortTrials(trials);
             
-            trials.forEach(trial => {
-                // Determinar clase de estado
+            trials.forEach((trial, index) => {
+                // Determine status class
                 let statusClass = '';
                 let statusText = '';
                 
@@ -1111,8 +2043,12 @@
                         break;
                 }
                 
+                // Add animation delay
+                const animationDelay = index * 0.1;
+                
                 const trialElement = document.createElement('div');
                 trialElement.className = 'trial-card';
+                trialElement.style.animationDelay = `${animationDelay}s`;
                 trialElement.innerHTML = `
                     <div class="card-header">
                         <h3>${trial.title}</h3>
@@ -1129,6 +2065,10 @@
                                 <span><strong>Ubicación:</strong> ${trial.location}</span>
                             </div>
                             <div class="info-item">
+                                <i class="fas fa-building"></i>
+                                <span><strong>Empresa:</strong> ${trial.sponsor}</span>
+                            </div>
+                            <div class="info-item">
                                 <i class="fas fa-vial"></i>
                                 <span><strong>Fase:</strong> ${trial.phase}</span>
                             </div>
@@ -1137,8 +2077,16 @@
                                 <span><strong>Participantes:</strong> ${trial.participants}</span>
                             </div>
                             <div class="info-item">
+                                <i class="fas fa-hospital"></i>
+                                <span><strong>Institución:</strong> ${trial.institution}</span>
+                            </div>
+                            <div class="info-item">
                                 <i class="fas fa-calendar-alt"></i>
                                 <span><strong>Duración:</strong> ${formatDate(trial.startDate)} - ${formatDate(trial.endDate)}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-user-md"></i>
+                                <span><strong>Contacto:</strong> ${trial.contact}</span>
                             </div>
                         </div>
                         <p class="trial-description">${trial.description}</p>
@@ -1157,7 +2105,142 @@
             });
         }
         
-        // Función para ordenar los ensayos
+        // Add marker to map
+        function addMarkerToMap(trial) {
+            let markerColor;
+            switch(trial.status) {
+                case 'recruiting': markerColor = '#10b981'; break;
+                case 'completed': markerColor = '#3b82f6'; break;
+                case 'not-recruiting': markerColor = '#ef4444'; break;
+                default: markerColor = '#94a3b8';
+            }
+            
+            // Create custom icon
+            const customIcon = L.divIcon({
+                className: 'custom-icon',
+                html: `<div style="background: ${markerColor}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.3);"></div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+            
+            const marker = L.marker([trial.lat, trial.lng], {icon: customIcon}).addTo(map);
+            
+            marker.bindPopup(`
+                <div style="min-width: 250px;">
+                    <h3 style="margin: 0 0 10px; font-size: 1.1rem; color: ${trial.status === 'recruiting' ? '#10b981' : trial.status === 'completed' ? '#3b82f6' : '#ef4444'};">${trial.title}</h3>
+                    <p><strong>Enfermedad:</strong> ${trial.disease}</p>
+                    <p><strong>Empresa:</strong> ${trial.sponsor}</p>
+                    <p><strong>Fase:</strong> ${trial.phase}</p>
+                    <p><strong>Estado:</strong> ${trial.status === 'recruiting' ? 'Reclutando' : trial.status === 'completed' ? 'Completado' : 'No reclutando'}</p>
+                    <p><strong>Institución:</strong> ${trial.institution}</p>
+                    <a href="${trial.link}" style="display: inline-block; margin-top: 10px; padding: 5px 10px; background: #2563eb; color: white; border-radius: 5px; text-decoration: none;">Ver detalles</a>
+                </div>
+            `);
+        }
+        
+        // Show map with trials
+        function showMap(trials) {
+            // Clear existing markers
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+            });
+            
+            // Add filtered markers
+            trials.forEach(trial => {
+                addMarkerToMap(trial);
+            });
+            
+            // Adjust zoom to show all markers
+            if (trials.length > 0) {
+                const group = new L.featureGroup(trials.map(trial => L.marker([trial.lat, trial.lng])));
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+            
+            // Refresh map to ensure proper rendering
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+        }
+        
+        // Create analytics charts
+        function createCharts(trials) {
+            // Phase distribution chart
+            const phaseCounts = {
+                'I': 0, 'II': 0, 'III': 0, 'IV': 0
+            };
+            
+            trials.forEach(trial => {
+                phaseCounts[trial.phase]++;
+            });
+            
+            const phaseCtx = document.getElementById('phaseChart').getContext('2d');
+            new Chart(phaseCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Fase I', 'Fase II', 'Fase III', 'Fase IV'],
+                    datasets: [{
+                        data: [phaseCounts.I, phaseCounts.II, phaseCounts.III, phaseCounts.IV],
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#10b981',
+                            '#f59e0b',
+                            '#ef4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Status distribution chart
+            const statusCounts = {
+                'recruiting': 0, 'completed': 0, 'not-recruiting': 0
+            };
+            
+            trials.forEach(trial => {
+                statusCounts[trial.status]++;
+            });
+            
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Reclutando', 'Completado', 'No reclutando'],
+                    datasets: [{
+                        label: 'Número de Ensayos',
+                        data: [statusCounts.recruiting, statusCounts.completed, statusCounts['not-recruiting']],
+                        backgroundColor: [
+                            '#10b981',
+                            '#3b82f6',
+                            '#ef4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Sort trials
         function sortTrials(trials) {
             const sortValue = sortSelect.value;
             const [sortKey, sortDirection] = sortValue.split('-');
@@ -1193,7 +2276,7 @@
             });
         }
         
-        // Función para filtrar los ensayos
+        // Filter trials
         function filterTrials() {
             const disease = document.getElementById('disease').value;
             const location = document.getElementById('location').value;
@@ -1201,8 +2284,10 @@
             const trialPhase = document.getElementById('trial-phase').value;
             const trialStatus = document.getElementById('trial-status').value;
             const intervention = document.getElementById('intervention').value;
+            const sponsor = document.getElementById('sponsor').value;
+            const ageGroup = document.getElementById('age-group').value;
             
-            // Mostrar spinner de carga
+            // Show loading spinner
             resultsContainer.innerHTML = `
                 <div class="loading">
                     <div class="spinner"></div>
@@ -1210,8 +2295,10 @@
                 </div>
             `;
             resultsSection.style.display = 'block';
+            mapContainer.style.display = 'none';
+            analyticsSection.style.display = 'none';
             
-            // Simular tiempo de búsqueda
+            // Simulate search time
             setTimeout(() => {
                 const filteredTrials = clinicalTrials.filter(trial => {
                     return (!disease || trial.disease === disease) &&
@@ -1219,17 +2306,19 @@
                            (!trialCode || trial.id.toLowerCase().includes(trialCode)) &&
                            (!trialPhase || trial.phase === trialPhase) &&
                            (!trialStatus || trial.status === trialStatus) &&
-                           (!intervention || trial.intervention === intervention);
+                           (!intervention || trial.intervention === intervention) &&
+                           (!sponsor || trial.sponsorType === sponsor) &&
+                           (!ageGroup || trial.ageGroup === ageGroup);
                 });
                 
                 displayTrials(filteredTrials);
                 
-                // Scroll a los resultados
+                // Scroll to results
                 resultsSection.scrollIntoView({ behavior: 'smooth' });
             }, 800);
         }
         
-        // Función para restablecer los filtros
+        // Reset filters
         function resetFilters() {
             document.getElementById('disease').value = '';
             document.getElementById('location').value = '';
@@ -1237,27 +2326,159 @@
             document.getElementById('trial-phase').value = '';
             document.getElementById('trial-status').value = '';
             document.getElementById('intervention').value = '';
+            document.getElementById('sponsor').value = '';
+            document.getElementById('age-group').value = '';
             sortSelect.value = 'startDate-desc';
             
             resultsSection.style.display = 'none';
+            mapContainer.style.display = 'none';
+            analyticsSection.style.display = 'none';
         }
         
-        // Event Listeners
-        searchBtn.addEventListener('click', filterTrials);
-        resetBtn.addEventListener('click', resetFilters);
-        sortSelect.addEventListener('change', filterTrials);
+        // Save search
+        function saveSearch() {
+            alert('¡Búsqueda guardada con éxito! Recibirás notificaciones cuando nuevos ensayos coincidan con tus criterios.');
+        }
         
-        // Permitir búsqueda con Enter
-        document.querySelectorAll('input').forEach(input => {
-            input.addEventListener('keypress', function(e) {
+        // AI Assistant Functions
+        function toggleChat() {
+            aiChatbox.classList.toggle('active');
+        }
+        
+        function closeChatbox() {
+            aiChatbox.classList.remove('active');
+        }
+        
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', `${sender}-message`);
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('message-content');
+            contentDiv.textContent = text;
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function generateResponse(message) {
+            const lowerMsg = message.toLowerCase();
+            
+            // Buscar en las preguntas frecuentes del JSON
+            for (const faq of faqs) {
+                if (lowerMsg.includes(faq.question.toLowerCase().replace('¿', '').replace('?', ''))) {
+                    return faq.answer;
+                }
+            }
+            
+            // Respuestas por defecto
+            if (lowerMsg.includes('hola') || lowerMsg.includes('buenas')) {
+                return '¡Hola! Soy el asistente virtual de BEC+ Premium. ¿En qué puedo ayudarte hoy?';
+            } else if (lowerMsg.includes('gracias') || lowerMsg.includes('agradezco')) {
+                return '¡De nada! Estoy aquí para ayudarte. ¿Hay algo más en lo que pueda asistirte?';
+            } else if (lowerMsg.includes('adiós') || lowerMsg.includes('chao') || lowerMsg.includes('hasta luego')) {
+                return 'Hasta luego. ¡Que tengas un buen día! Recuerda que puedes volver a preguntarme cuando lo necesites.';
+            } else {
+                return 'Entiendo que tienes una pregunta sobre ensayos clínicos. ¿Podrías reformularla? Estoy aquí para ayudarte a encontrar la información que necesitas.';
+            }
+        }
+        
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (message) {
+                // Add user message
+                addMessage(message, 'user');
+                userInput.value = '';
+                
+                // Simulate AI response
+                setTimeout(() => {
+                    const response = generateResponse(message);
+                    addMessage(response, 'ai');
+                }, 800);
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            createCharts(clinicalTrials);
+            
+            // Event Listeners
+            searchBtn.addEventListener('click', filterTrials);
+            resetBtn.addEventListener('click', resetFilters);
+            saveSearchBtn.addEventListener('click', saveSearch);
+            sortSelect.addEventListener('change', filterTrials);
+            
+            // Allow search with Enter
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        filterTrials();
+                    }
+                });
+            });
+            
+            // Tabs functionality
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Update active classes
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const tab = this.getAttribute('data-tab');
+                    
+                    const disease = document.getElementById('disease').value;
+                    const location = document.getElementById('location').value;
+                    const trialCode = document.getElementById('trial-code').value.toLowerCase();
+                    const trialPhase = document.getElementById('trial-phase').value;
+                    const trialStatus = document.getElementById('trial-status').value;
+                    const intervention = document.getElementById('intervention').value;
+                    const sponsor = document.getElementById('sponsor').value;
+                    const ageGroup = document.getElementById('age-group').value;
+                    
+                    const filteredTrials = clinicalTrials.filter(trial => {
+                        return (!disease || trial.disease === disease) &&
+                               (!location || trial.location === location) &&
+                               (!trialCode || trial.id.toLowerCase().includes(trialCode)) &&
+                               (!trialPhase || trial.phase === trialPhase) &&
+                               (!trialStatus || trial.status === trialStatus) &&
+                               (!intervention || trial.intervention === intervention) &&
+                               (!sponsor || trial.sponsorType === sponsor) &&
+                               (!ageGroup || trial.ageGroup === ageGroup);
+                    });
+                    
+                    if (tab === 'list') {
+                        displayTrials(filteredTrials);
+                        resultsContainer.style.display = 'grid';
+                        mapContainer.style.display = 'none';
+                        analyticsSection.style.display = 'none';
+                    } else if (tab === 'map') {
+                        showMap(filteredTrials);
+                        resultsContainer.style.display = 'none';
+                        mapContainer.style.display = 'block';
+                        analyticsSection.style.display = 'none';
+                    } else if (tab === 'analytics') {
+                        createCharts(filteredTrials);
+                        resultsContainer.style.display = 'none';
+                        mapContainer.style.display = 'none';
+                        analyticsSection.style.display = 'block';
+                    }
+                });
+            });
+            
+            // AI Assistant Event Listeners
+            aiAssistant.addEventListener('click', toggleChat);
+            closeChat.addEventListener('click', closeChatbox);
+            sendMessageBtn.addEventListener('click', sendMessage);
+            userInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
-                    filterTrials();
+                    sendMessage();
                 }
             });
         });
-        
-        // Inicialización
-        resetFilters();
     </script>
 </body>
 </html>
